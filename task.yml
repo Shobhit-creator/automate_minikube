@@ -1,0 +1,48 @@
+- hosts: localhost
+  tasks:
+  - name: Launching OS
+    ec2:
+      key_name: shobhit_aws_key
+      instance_type: t2.medium
+      image: ami-04b1ddd35fd71475a
+      wait: yes
+      count: 1
+      instance_tags:
+        Name: k8s_minikube
+      vpc_subnet_id: subnet-0c9f8b64
+      assign_public_ip: yes
+      region: ap-south-1
+      state: present
+      group_id: sg-0c8941d8c779ff1d5
+- hosts: k8s_minikube
+  tasks:
+  - name: conf repo for kubectl
+    yum_repository:
+      name: Kubernetes
+      description: Kubectl
+      baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+      gpgcheck: yes
+      gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+      repo_gpgcheck: yes
+  - name: Installing kubectl
+    yum:
+      name: kubectl
+      state: present
+  - name: Installing Docker
+    yum:
+     name: docker
+     state: present
+  - name: Installing conntrack
+    yum:
+      name: conntrack
+      state: present
+  - name: Downloading minikube
+    get_url:
+      url: https://storage.googleapis.com/minikube/releases/latest/minikube-latest.x86_64.rpm
+      dest: /root/minikube-latest.x86_64.rpm
+  - name: Installing minkube
+    yum:
+      name: /root/minikube-latest.x86_64.rpm
+      state: present
+  - name: Starting Minikube driver using none
+    command: minkube start --driver=none
